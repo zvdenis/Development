@@ -25,23 +25,19 @@ public class Parser {
     private final String[] listToIgnore = new String[]{"SQLProxy", "P2_COD"};
 
     private int ignoredLinesCount = 0;
-    private ConcurrentHashMap<Long, LocalTime> threadsTime;
 
     LogCounter logCounter;
 
     public void parseFile(File file, LogCounter logCounter) {
-        threadsTime = new ConcurrentHashMap<>();
+
         this.logCounter = logCounter;
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), "utf-8"));) {
-            //ExecutorService threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() + 1);
-            ExecutorService threadPool = Executors.newFixedThreadPool(2);
-            //threadPool.submit(() -> logCounter.dataChecker());
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+            ExecutorService threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() / 2 + 1);
 
-            Thread dataCheckerThread = new Thread(() -> logCounter.dataChecker(threadsTime));
+            Thread dataCheckerThread = new Thread(logCounter::dataChecker);
             dataCheckerThread.start();
-            List<Future<Double>> futures = new ArrayList<>();
 
-            for (String line = null; (line = br.readLine()) != null; ) {
+            for (String line; (line = br.readLine()) != null; ) {
                 final String lineToParse = line;
                 threadPool.execute(() -> parseLine(lineToParse));
             }
@@ -50,7 +46,7 @@ public class Parser {
 
             logCounter.isFinished = true;
             dataCheckerThread.join();
-            System.out.println("Lines ignored" + ignoredLinesCount);
+            System.out.println("Lines ignored " + ignoredLinesCount);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -84,7 +80,7 @@ public class Parser {
 
             LogElement element = new LogElement(inputProcess, time, idString, typeString);
 
-            threadsTime.put(Thread.currentThread().getId(), time);
+
             logCounter.addLogElement(element);
 
         } catch (Exception e) {

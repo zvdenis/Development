@@ -13,6 +13,10 @@ public class Application {
     public static void main(String[] args) {
         File folder = new File(folderToParse + "/");
         File[] listOfFiles = folder.listFiles();
+        if(listOfFiles == null || listOfFiles.length < 1){
+            System.out.println("No files found");
+            return;
+        }
         parser = new Parser();
         parseFiles(listOfFiles);
     }
@@ -32,7 +36,7 @@ public class Application {
             long start = System.currentTimeMillis();
             parser.parseFile(file, logCounter);
             long time = System.currentTimeMillis() - start;
-            System.out.println("Finished in " + time);
+            System.out.println("Finished in " + time / 1000.0 + "\n");
         }
     }
 
