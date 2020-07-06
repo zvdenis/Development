@@ -7,32 +7,26 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.sql.Time;
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Parser {
     private final String[] listToIgnore = new String[]{"SQLProxy", "P2_COD"};
 
-    private int ignoredLinesCount = 0;
+    private AtomicInteger ignoredLinesCount;
 
     LogCounter logCounter;
 
     public void parseFile(File file, LogCounter logCounter) {
 
+        ignoredLinesCount = new AtomicInteger(0);
         this.logCounter = logCounter;
         try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
-            ExecutorService threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() / 2 + 1);
+            ExecutorService threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() / 3 + 1);
 
             Thread dataCheckerThread = new Thread(logCounter::dataChecker);
             dataCheckerThread.start();
@@ -41,6 +35,7 @@ public class Parser {
                 final String lineToParse = line;
                 threadPool.execute(() -> parseLine(lineToParse));
             }
+
             threadPool.shutdown();
             threadPool.awaitTermination(3, TimeUnit.DAYS);
 
@@ -57,18 +52,15 @@ public class Parser {
 
         for (var word : listToIgnore) {
             if (line.contains(word)) {
-                ignoredLinesCount++;
+                ignoredLinesCount.incrementAndGet();
                 return;
             }
         }
-
         try {
-
             boolean inputProcess = line.contains("input process");
 
             String timeString = line.substring(0, line.indexOf(';'));
             LocalTime time = LocalTime.parse(timeString, DateTimeFormatter.ofPattern("HH:mm:ss.SSSSSS"));
-
 
             int idStart = line.indexOf("id") + 3;
             int idEnd = line.indexOf(',', idStart);
@@ -80,12 +72,10 @@ public class Parser {
 
             LogElement element = new LogElement(inputProcess, time, idString, typeString);
 
-
             logCounter.addLogElement(element);
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 }

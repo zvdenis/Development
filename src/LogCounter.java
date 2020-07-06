@@ -34,18 +34,14 @@ public class LogCounter {
 
 
     private void processLogElement(LogElement logElement) {
-
         if (!logs.containsKey(logElement.id)) {
             logs.put(logElement.id, logElement);
             return;
         }
-
         LogElement output = logs.get(logElement.id);
         DataPart dataPart = new DataPart(logElement, output);
         logs.remove(logElement.id);
-
         addToData(dataPart);
-
     }
 
     private void addToData(DataPart dataPart) {
@@ -61,12 +57,6 @@ public class LogCounter {
             data.get(bucket).get(dataPart.type).add(dataPart.duration);
 
         } catch (Exception e) {
-//            System.out.println(data);
-//            System.out.println(data.get(bucket));
-//            System.out.println(data.get(bucket).get(dataPart.type));
-            System.out.println(bucket + "   " + bucket.getNano());
-            System.out.println(dataPart.type);
-            System.out.println(dataPart.duration);
             e.printStackTrace();
         }
 
@@ -74,12 +64,8 @@ public class LogCounter {
 
     public void dataChecker() {
         try {
-
-
             while (true) {
                 LocalTime minDataTime = getDataMinTime();
-                //LocalTime minThreadsTime = getThreadsMinTime(threadsTime);
-                //LocalTime minThreadsTime = getThreadsMinTime();
 
                 if (isFinished || data.keySet().size() > 9) {
                     if (minDataTime == null) {
@@ -89,12 +75,9 @@ public class LogCounter {
                     continue;
                 }
 
-
                 for (int i = 0; i < 15 && !queue.isEmpty(); i++) {
                     processLogElement(queue.remove());
                 }
-
-
             }
             writer.close();
         } catch (Exception e) {
@@ -124,30 +107,6 @@ public class LogCounter {
             }
         }
         return minTime;
-    }
-
-    private LocalTime getThreadsMinTime(HashMap<Long, LocalTime> threadsTime) {
-        LocalTime minTime = null;
-        for (LocalTime time : threadsTime.values()) {
-            if (minTime == null || minTime.isAfter(time)) {
-                minTime = time;
-            }
-        }
-        return minTime;
-
-    }
-
-    private LocalTime getThreadsMinTime() {
-        LocalTime minTime = null;
-        Iterator<LogElement> iterator = queue.iterator();
-        for (int i = 0; i < 50 && iterator.hasNext(); i++) {
-            LogElement element = iterator.next();
-            if (minTime == null && !element.isInputProcess || !element.isInputProcess && minTime.isAfter(element.time)) {
-                minTime = element.time;
-            }
-        }
-        return minTime;
-
     }
 
 }
