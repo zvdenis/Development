@@ -34,3 +34,6 @@ https://github.com/zvdenis/Development/
 * public void addToQueue(LocalTime time, String type, ArrayList<Long> completionTimes) - добавляет данные в очередь вывода
 * private void printType(LocalTime time, String type, ArrayList<Long> completionTimes) - выводит строку с полученное информацией
 * private void processQueue() - выводит в файл пока очередь не пустая, в противном случае поток блокируется
+
+## Инструкция
+  start.bat запускает jar файл, перед запуском на одном уровне с jar файлом должны быть папки results и filesToParse - папка для результатов и папка с файлами для анализа
